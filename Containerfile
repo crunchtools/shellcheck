@@ -105,7 +105,10 @@ RUN grep -qx "index-state: $INDEX_STATE" cabal.project \
 # repository, and glibc-static is codeready-builder only. So the binary is
 # dynamic, and `ldd` says exactly what it wants. The list below is checked
 # against it: every library not already in the runtime image is copied across.
-RUN ldd /out/shellcheck | tee /dev/stderr \
+RUN ldd /out/shellcheck >&2 \
+    && extra=$(ldd /out/shellcheck | awk '{print $1}' \
+        | grep -vxE 'linux-vdso\.so\.1|libm\.so\.6|libgmp\.so\.10|libc\.so\.6|/lib64/ld-linux-x86-64\.so\.2' || true) \
+    && { test -z "$extra" || { echo "shellcheck links libraries this image does not carry: $extra" >&2; exit 1; }; } \
     && cp -L /usr/lib64/libgmp.so.10 /out/libgmp.so.10
 
 # hi/core-runtime is glibc and nothing else (no gmp, no libffi, no shell, no

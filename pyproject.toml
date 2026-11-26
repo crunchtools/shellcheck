@@ -1,0 +1,51 @@
+# Not a Python package: this repo is a Containerfile, a frozen Hackage plan and
+# two test fixtures. The [project] table exists only so `uv lock` can pin the
+# gate's own tools; `package = false` keeps uv from building or installing it.
+[project]
+name = "shellcheck"
+version = "0"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.sdlc]
+repo-kinds = ["container-image"]
+# A python repo runs the python stack alone unless it names more; without this
+# nothing in `sdlc ci` builds, scans or boots the Containerfile.
+stacks = ["container"]
+
+[tool.sdlc.push]
+# There is no Python and no in-repo Semgrep rule here, so these have nothing to
+# judge and exit 2 ("could not run") rather than pass: mypy and pytest are not
+# in the lockfile, semgrep has no .semgrep, and CodeQL finds no Python or YAML
+# source to build a database from. The Containerfile is judged by hadolint, the
+# image by grype and image-contract.
+skip = ["mypy", "pytest", "semgrep", "codeql"]
+
+[tool.sdlc.ci]
+checks = ["image-contract"]
+
+[tool.sdlc.ci.container-build]
+tag = "localhost/shellcheck:sdlc"
+
+# The image has no shell, so the contract runs the binary directly: argv[0] is
+# the entrypoint. The repo is mounted read-only at /repo. A clean script must
+# produce no output and exit 0.
+[tool.sdlc.ci.image-contract]
+kind = "command"
+image = "localhost/shellcheck:sdlc"
+argv = ["/usr/local/bin/shellcheck", "/repo/tests/fixtures/clean.sh"]
+
+# With no arguments shellcheck prints usage and exits 3, which the smoke check
+# reads as a crash; --version is the real "it starts" proof.
+[tool.sdlc.ci.container-smoke]
+args = ["--version"]
+
+[tool.sdlc.image]
+image = "quay.io/crunchtools/shellcheck"
+# A CLI: it prints a result and exits, so there is no server to boot and
+# nothing for a health check to ask. image-contract above is the gate.
+boot = "none"
+boot-none-reason = "a one-shot CLI whose entrypoint is shellcheck; sdlc ci's image-contract check runs the binary against a fixture on every pull request"

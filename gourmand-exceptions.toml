@@ -1,0 +1,8 @@
+# Gourmand Exceptions
+# Documented exceptions for files that legitimately trigger checks
+
+[[exceptions]]
+check = "CH001-absolute_paths"
+path = "pyproject.toml"
+justification = "The image-contract argv names the binary by its absolute path in the image (its install path), because the command check runs argv[0] as the entrypoint and the image has no shell or PATH search to rely on."
+classification = "by_design"

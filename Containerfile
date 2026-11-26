@@ -111,20 +111,23 @@ RUN ldd /out/shellcheck >&2 \
     && { test -z "$extra" || { echo "shellcheck links libraries this image does not carry: $extra" >&2; exit 1; }; } \
     && cp -L /usr/lib64/libgmp.so.10 /out/libgmp.so.10
 
-# hi/core-runtime is glibc and nothing else (no gmp, no libffi, no shell, no
-# grep), so the one library ShellCheck's Haskell runtime needs beyond libc, libgmp, is
-# copied from this builder. Not hi/static: that has no libc to load a dynamic
+# hi/core-runtime is glibc, bash and coreutils-single, with no gmp, libffi,
+# grep, sed or awk, so the one library ShellCheck's Haskell runtime needs beyond
+# libc, libgmp, is copied from this builder. Not hi/static: that has no libc to load a dynamic
 # binary against.
 FROM registry.access.redhat.com/hi/core-runtime@sha256:fe49c1e94db2743f99ea08d7bec7b7326595130463f76dd32308e6e122361149
 
+ARG SHELLCHECK_VERSION
+
 LABEL maintainer="fatherlinux <scott.mccarty@crunchtools.com>"
-LABEL description="ShellCheck 0.11.0, built from upstream source; the entrypoint is shellcheck"
+LABEL description="ShellCheck ${SHELLCHECK_VERSION}, built from upstream source; the entrypoint is shellcheck"
 LABEL org.opencontainers.image.title="crunchtools/shellcheck"
-LABEL org.opencontainers.image.description="ShellCheck 0.11.0 built from the upstream v0.11.0 tag with GHC 9.8.4 and a frozen Hackage"
+LABEL org.opencontainers.image.description="ShellCheck ${SHELLCHECK_VERSION} built from the upstream v${SHELLCHECK_VERSION} tag with GHC 9.8.4 and a frozen Hackage"
 LABEL org.opencontainers.image.source="https://github.com/crunchtools/shellcheck"
-# ShellCheck is GPLv3 (GPL-3.0-only); this repo's own files (Containerfile,
-# scaffolding) are AGPL-3.0-or-later like every crunchtools repo.
-LABEL org.opencontainers.image.licenses="GPL-3.0-only AND AGPL-3.0-or-later"
+# ShellCheck is GPLv3 (GPL-3.0-only); the libgmp copied in beside it is
+# LGPLv3+ or GPLv2+; this repo's own files (Containerfile, scaffolding) are
+# AGPL-3.0-or-later like every crunchtools repo.
+LABEL org.opencontainers.image.licenses="GPL-3.0-only AND (LGPL-3.0-or-later OR GPL-2.0-or-later) AND AGPL-3.0-or-later"
 LABEL org.opencontainers.image.vendor="Crunchtools"
 LABEL org.opencontainers.image.base.name="registry.access.redhat.com/hi/core-runtime@sha256:fe49c1e94db2743f99ea08d7bec7b7326595130463f76dd32308e6e122361149"
 

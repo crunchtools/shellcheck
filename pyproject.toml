@@ -1,5 +1,5 @@
 # Not a Python package: this repo is a Containerfile, a frozen Hackage plan and
-# two test fixtures. The [project] table exists only so `uv lock` can pin the
+# one test fixture. The [project] table exists only so `uv lock` can pin the
 # gate's own tools; `package = false` keeps uv from building or installing it.
 [project]
 name = "shellcheck"
@@ -30,8 +30,8 @@ checks = ["image-contract"]
 [tool.sdlc.ci.container-build]
 tag = "localhost/shellcheck:sdlc"
 
-# The image has no shell, so the contract runs the binary directly: argv[0] is
-# the entrypoint. The repo is mounted read-only at /repo. A clean script must
+# The image has bash but no grep, so the contract runs the binary directly and
+# judges it by exit code alone. The repo is mounted read-only at /repo. A clean script must
 # produce no output and exit 0.
 [tool.sdlc.ci.image-contract]
 kind = "command"
